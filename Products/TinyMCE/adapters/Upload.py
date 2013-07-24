@@ -8,6 +8,11 @@ from Products.CMFCore.utils import getToolByName
 from plone.outputfilters.browser.resolveuid import uuidFor
 from zope.interface import implements
 from zope.i18nmessageid import MessageFactory
+from zope.component import queryUtility
+from plone.i18n.normalizer.interfaces import IIDNormalizer
+from StringIO import StringIO
+from base64 import decodestring
+import re
 
 from Products.TinyMCE.adapters.interfaces.Upload import IUpload
 
@@ -97,8 +102,15 @@ class Upload(object):
         ctr_tool = getToolByName(context, 'content_type_registry')
         utility = getToolByName(context, 'portal_tinymce')
 
-        id = request['uploadfile'].filename
-        content_type = request['uploadfile'].headers["Content-Type"]
+        if(request['uploadfileb64']):
+            id = queryUtility(IIDNormalizer).normalize(request['uploadtitle']) or 'image'
+            content_type = re.match('data:([^;]+)', request['uploadfileb64']).groups()[0]
+            ext = content_type.split('/')[-1]
+            if(not id.endswith(ext)):
+                id += '.' + ext
+        else:
+            id = request['uploadfile'].filename
+            content_type = request['uploadfile'].headers["Content-Type"]
         typename = ctr_tool.findTypeName(id, content_type, "")
 
         # Permission checks based on code by Danny Bloemendaal
@@ -167,7 +179,10 @@ class Upload(object):
         else:
             # set primary field
             pf = obj.getPrimaryField()
-            pf.set(obj, request['uploadfile'])
+            if(request['uploadfileb64']):
+                pf.set(obj, StringIO(decodestring(request['uploadfileb64'].split(',')[-1])))
+            else:
+                pf.set(obj, request['uploadfile'])
 
         if not obj:
             return self.errorMessage("Could not upload the file")
@@ -216,6 +231,7 @@ class Upload(object):
         if not field_name:
             return False
         else:
+            # TODO: domruf handle uploadfileb64
             # Create either a NamedBlobImage or a NamedImage
             setattr(obj, field_name, field._type(request['uploadfile'].read(),
                                                  filename=unicode(id)))
