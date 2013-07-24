@@ -12,7 +12,7 @@ except ImportError:
 AVAILABLE_LANGUAGES = set(
     'sq ar hy az eu be bn nb bs br bg ca ch hr cs da dv nl en et fi fr gl '
     'ka de el gu he hi hu is id ia it ja ko lv lt lb mk ms ml mn se no nn fa '
-    'pl pt ps ro ru sc sr ii si sk sl es sv ta tt te th tr tw uk ur cy vi zu'.split())
+    'pl pt ps ro ru sc sr si sk sl es sv ta tt te th tr tw uk ur cy vi zu'.split())
 
 LANG_MAPPING = {'zh': 'zh_CN'}
 
